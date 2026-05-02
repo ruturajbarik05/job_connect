@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Job;
 use App\Models\JobCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
@@ -24,12 +25,19 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        $categories = JobCategory::withCount(['activeJobs' => function ($query) {
-            $query->where('status', 'active');
-        }])->get();
+        $categories = Cache::remember('homepage_categories', 600, function () {
+            return JobCategory::withCount(['activeJobs' => function ($query) {
+                $query->where('status', 'active');
+            }])->get();
+        });
 
-        $totalJobs = Job::active()->count();
-        $totalCompanies = Company::where('status', 'approved')->count();
+        $totalJobs = Cache::remember('homepage_total_jobs', 300, function () {
+            return Job::active()->count();
+        });
+
+        $totalCompanies = Cache::remember('homepage_total_companies', 300, function () {
+            return Company::where('status', 'approved')->count();
+        });
 
         return view('frontend.home.index', compact(
             'featuredJobs',
@@ -45,7 +53,7 @@ class HomeController extends Controller
         $query = Job::active()->with(['company', 'category']);
 
         if ($request->has('search')) {
-            $search = $request->search;
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', "%{$search}%")
                     ->orWhere('description', 'LIKE', "%{$search}%")
@@ -70,7 +78,8 @@ class HomeController extends Controller
         }
 
         if ($request->has('location')) {
-            $query->where('location', 'LIKE', "%{$request->location}%");
+            $location = str_replace(['%', '_'], ['\\%', '\\_'], $request->location);
+            $query->where('location', 'LIKE', "%{$location}%");
         }
 
         if ($request->has('min_salary')) {

@@ -41,7 +41,7 @@ class JobController extends Controller
             abort(404);
         }
 
-        $job->incrementViews();
+        $job->incrementViewsOnce();
 
         $relatedJobs = Job::active()
             ->where('id', '!=', $job->id)

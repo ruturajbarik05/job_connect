@@ -4,13 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use App\Models\Job;
-use App\Models\Notification;
 use App\Models\SavedJob;
+use App\Services\ApplicationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ApplicationController extends Controller
 {
+    public function __construct(
+        private ApplicationService $applicationService
+    ) {}
+
     public function store(Request $request, Job $job)
     {
         if (! Auth::check()) {
@@ -47,23 +51,11 @@ class ApplicationController extends Controller
             ]);
         }
 
-        $application = Application::create([
-            'user_id' => $user->id,
-            'job_id' => $job->id,
-            'status' => 'applied',
-            'applied_at' => now(),
-            'resume' => $profile->resume,
-            'cover_letter' => $request->cover_letter,
-        ]);
-
-        $job->incrementApplications();
-
-        Notification::send(
-            $job->user_id,
-            'new_application',
-            'New Application Received',
-            "{$user->name} has applied for {$job->title}.",
-            route('recruiter.applications.show', $application->id)
+        $this->applicationService->applyForJob(
+            $user->id,
+            $job,
+            $request->cover_letter,
+            $profile->resume
         );
 
         return redirect()->back()->with('success', 'Application submitted successfully!');
@@ -71,15 +63,13 @@ class ApplicationController extends Controller
 
     public function withdraw(Application $application)
     {
-        if ($application->user_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorize('withdraw', $application);
 
         if ($application->status === 'withdrawn') {
             return redirect()->back()->withErrors(['error' => 'Application already withdrawn.']);
         }
 
-        $application->update(['status' => 'withdrawn']);
+        $this->applicationService->withdraw($application);
 
         return redirect()->back()->with('success', 'Application withdrawn successfully.');
     }

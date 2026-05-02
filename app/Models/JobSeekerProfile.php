@@ -33,6 +33,7 @@ class JobSeekerProfile extends Model
         'salary_currency',
         'employment_type_preference',
         'is_active',
+        'views',
     ];
 
     protected $casts = [
@@ -41,6 +42,7 @@ class JobSeekerProfile extends Model
         'date_of_birth' => 'date',
         'expected_salary' => 'decimal:2',
         'is_active' => 'boolean',
+        'views' => 'integer',
     ];
 
     public function user()

@@ -3,17 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'role_id',
         'name',
         'email',
+        'email_verified_at',
         'password',
         'avatar',
         'is_active',
@@ -69,9 +71,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Job::class, 'saved_jobs');
     }
 
-    public function notifications()
+    /**
+     * App notifications (renamed to avoid conflict with Laravel Notifications).
+     */
+    public function appNotifications()
     {
-        return $this->hasMany(Notification::class);
+        return $this->hasMany(AppNotification::class);
     }
 
     public function jobs()

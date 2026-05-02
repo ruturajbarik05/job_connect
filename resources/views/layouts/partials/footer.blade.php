@@ -2,7 +2,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-4">
-                <h5>JobPortal</h5>
+                <h5>JobConnect</h5>
                 <p class="text-muted">Connecting talent with opportunity. Find your dream job or hire the best candidates.</p>
             </div>
             <div class="col-md-4">
@@ -23,7 +23,7 @@
         </div>
         <hr class="bg-secondary">
         <div class="text-center text-muted">
-            <small>&copy; {{ date('Y') }} JobPortal. All rights reserved.</small>
+            <small>&copy; {{ date('Y') }} JobConnect. All rights reserved.</small>
         </div>
     </div>
 </footer>

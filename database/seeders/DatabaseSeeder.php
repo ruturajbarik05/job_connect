@@ -10,7 +10,6 @@ use App\Models\JobSeekerProfile;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -25,22 +24,22 @@ class DatabaseSeeder extends Seeder
         $recruiterRole = Role::where('slug', 'recruiter')->first();
         $jobseekerRole = Role::where('slug', 'jobseeker')->first();
 
-        $admin = User::firstOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@jobportal.com'],
             [
                 'name' => 'Admin User',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role_id' => $adminRole->id,
                 'email_verified_at' => now(),
                 'status' => 'active',
             ]
         );
 
-        $recruiter1 = User::firstOrCreate(
+        $recruiter1 = User::updateOrCreate(
             ['email' => 'recruiter@example.com'],
             [
                 'name' => 'John Smith',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role_id' => $recruiterRole->id,
                 'email_verified_at' => now(),
                 'status' => 'active',
@@ -71,7 +70,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'recruiter2@example.com'],
             [
                 'name' => 'Sarah Johnson',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role_id' => $recruiterRole->id,
                 'email_verified_at' => now(),
                 'status' => 'active',
@@ -102,7 +101,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'jobseeker@example.com'],
             [
                 'name' => 'Michael Chen',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role_id' => $jobseekerRole->id,
                 'email_verified_at' => now(),
                 'status' => 'active',
@@ -131,7 +130,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'jobseeker2@example.com'],
             [
                 'name' => 'Emily Davis',
-                'password' => Hash::make('password'),
+                'password' => 'password',
                 'role_id' => $jobseekerRole->id,
                 'email_verified_at' => now(),
                 'status' => 'active',

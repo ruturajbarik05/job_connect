@@ -1,7 +1,7 @@
 <aside class="sidebar bg-dark text-white">
     <div class="p-3 text-center border-bottom border-secondary">
         <i class="bi bi-briefcase fs-4"></i>
-        <span class="ms-2 fw-bold">JobPortal</span>
+        <span class="ms-2 fw-bold">JobConnect</span>
     </div>
     <nav class="nav flex-column mt-3">
         @if(auth()->user()->isAdmin())
@@ -22,6 +22,9 @@
             </a>
             <a class="nav-link {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}" href="{{ route('admin.categories.index') }}">
                 <i class="bi bi-grid me-2"></i>Categories
+            </a>
+            <a class="nav-link {{ request()->routeIs('admin.activity-log') ? 'active' : '' }}" href="{{ route('admin.activity-log') }}">
+                <i class="bi bi-clock-history me-2"></i>Activity Log
             </a>
         @elseif(auth()->user()->isRecruiter())
             <a class="nav-link {{ request()->routeIs('recruiter.dashboard') ? 'active' : '' }}" href="{{ route('recruiter.dashboard') }}">

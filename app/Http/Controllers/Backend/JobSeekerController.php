@@ -6,15 +6,20 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\EducationStoreRequest;
 use App\Http\Requests\ExperienceStoreRequest;
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\AppNotification;
 use App\Models\Application;
 use App\Models\Education;
 use App\Models\Experience;
-use App\Models\Notification;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class JobSeekerController extends Controller
 {
+    public function __construct(
+        private NotificationService $notificationService
+    ) {}
+
     public function dashboard()
     {
         $user = auth()->user();
@@ -22,7 +27,7 @@ class JobSeekerController extends Controller
         $stats = [
             'appliedJobs' => $user->applications()->count(),
             'savedJobs' => $user->savedJobs()->count(),
-            'profileViews' => $user->jobSeekerProfile ? $user->jobSeekerProfile->views : 0,
+            'profileViews' => $user->jobSeekerProfile?->views ?? 0,
             'interviews' => $user->applications()->where('status', 'interview')->count(),
         ];
 
@@ -38,7 +43,7 @@ class JobSeekerController extends Controller
             ->take(5)
             ->get();
 
-        $notifications = $user->notifications()
+        $notifications = $user->appNotifications()
             ->unread()
             ->latest()
             ->take(5)
@@ -114,14 +119,28 @@ class JobSeekerController extends Controller
 
         if ($request->hasFile('resume')) {
             if ($profile->resume) {
+                // Delete from both local (private) and public storage
+                Storage::disk('local')->delete($profile->resume);
                 Storage::disk('public')->delete($profile->resume);
             }
 
-            $path = $request->file('resume')->store('resumes', 'public');
+            // Store in local (private) disk for security
+            $path = $request->file('resume')->store('resumes', 'local');
             $profile->update(['resume' => $path]);
         }
 
         return redirect()->back()->with('success', 'Resume uploaded successfully.');
+    }
+
+    public function downloadResume()
+    {
+        $profile = auth()->user()->jobSeekerProfile;
+
+        if (! $profile || ! $profile->resume || ! Storage::disk('local')->exists($profile->resume)) {
+            return redirect()->back()->withErrors(['resume' => 'Resume file not found.']);
+        }
+
+        return Storage::disk('local')->download($profile->resume);
     }
 
     public function addEducation(EducationStoreRequest $request)
@@ -191,9 +210,7 @@ class JobSeekerController extends Controller
 
     public function showApplication(Application $application)
     {
-        if ($application->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $this->authorize('view', $application);
 
         $application->load(['job.company', 'job.category']);
 
@@ -212,7 +229,7 @@ class JobSeekerController extends Controller
 
     public function notifications()
     {
-        $notifications = auth()->user()->notifications()
+        $notifications = auth()->user()->appNotifications()
             ->latest()
             ->paginate(20);
 
@@ -221,8 +238,8 @@ class JobSeekerController extends Controller
 
     public function markNotificationRead($id)
     {
-        $notification = Notification::where('user_id', auth()->id())->findOrFail($id);
-        $notification->markAsRead();
+        $notification = AppNotification::where('user_id', auth()->id())->findOrFail($id);
+        $this->notificationService->markAsRead($notification);
 
         if ($notification->link) {
             return redirect($notification->link);
@@ -233,10 +250,29 @@ class JobSeekerController extends Controller
 
     public function markAllNotificationsRead()
     {
-        auth()->user()->notifications()
-            ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
+        $this->notificationService->markAllAsRead(auth()->id());
 
         return redirect()->back()->with('success', 'All notifications marked as read.');
+    }
+
+    /**
+     * Delete user account (soft delete).
+     */
+    public function deleteAccount(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|current_password',
+        ]);
+
+        $user = auth()->user();
+
+        auth()->logout();
+
+        $user->delete();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('home')->with('success', 'Your account has been deleted.');
     }
 }

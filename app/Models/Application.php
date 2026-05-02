@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\ApplicationStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Application extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -24,30 +26,6 @@ class Application extends Model
     protected $casts = [
         'applied_at' => 'datetime',
         'reviewed_at' => 'datetime',
-    ];
-
-    public const STATUS_APPLIED = 'applied';
-
-    public const STATUS_VIEWED = 'viewed';
-
-    public const STATUS_SHORTLISTED = 'shortlisted';
-
-    public const STATUS_INTERVIEW = 'interview';
-
-    public const STATUS_OFFER = 'offer';
-
-    public const STATUS_REJECTED = 'rejected';
-
-    public const STATUS_WITHDRAWN = 'withdrawn';
-
-    public static $statuses = [
-        self::STATUS_APPLIED => 'Applied',
-        self::STATUS_VIEWED => 'Viewed',
-        self::STATUS_SHORTLISTED => 'Shortlisted',
-        self::STATUS_INTERVIEW => 'Interview',
-        self::STATUS_OFFER => 'Offer',
-        self::STATUS_REJECTED => 'Rejected',
-        self::STATUS_WITHDRAWN => 'Withdrawn',
     ];
 
     public function user()
@@ -72,22 +50,22 @@ class Application extends Model
 
     public function markAsViewed(): void
     {
-        if ($this->status === self::STATUS_APPLIED) {
-            $this->update(['status' => self::STATUS_VIEWED]);
+        if ($this->status === ApplicationStatus::Applied->value) {
+            $this->update(['status' => ApplicationStatus::Viewed->value]);
         }
     }
 
     public function getStatusBadgeClassAttribute(): string
     {
-        return match ($this->status) {
-            self::STATUS_APPLIED => 'badge-primary',
-            self::STATUS_VIEWED => 'badge-info',
-            self::STATUS_SHORTLISTED => 'badge-success',
-            self::STATUS_INTERVIEW => 'badge-warning',
-            self::STATUS_OFFER => 'badge-success',
-            self::STATUS_REJECTED => 'badge-danger',
-            self::STATUS_WITHDRAWN => 'badge-secondary',
-            default => 'badge-secondary',
-        };
+        $status = ApplicationStatus::tryFrom($this->status);
+
+        return $status ? $status->badgeClass() : 'badge-secondary';
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        $status = ApplicationStatus::tryFrom($this->status);
+
+        return $status ? $status->label() : ucfirst($this->status);
     }
 }

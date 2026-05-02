@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
     <div class="container">
         <a class="navbar-brand fw-bold" href="{{ route('home') }}">
-            <i class="bi bi-briefcase me-2"></i>JobPortal
+            <i class="bi bi-briefcase me-2"></i>JobConnect
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
@@ -33,12 +33,12 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="bi bi-bell me-1"></i>
-                            @if(auth()->user()->notifications->where('is_read', false)->count() > 0)
-                                <span class="badge bg-danger">{{ auth()->user()->notifications->where('is_read', false)->count() }}</span>
+                            @if(auth()->user()->appNotifications->where('is_read', false)->count() > 0)
+                                <span class="badge bg-danger">{{ auth()->user()->appNotifications->where('is_read', false)->count() }}</span>
                             @endif
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            @forelse(auth()->user()->notifications->take(5) as $notification)
+                            @forelse(auth()->user()->appNotifications->take(5) as $notification)
                                 <li>
                                     <a class="dropdown-item" href="{{ $notification->link ?? '#' }}">
                                         <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>

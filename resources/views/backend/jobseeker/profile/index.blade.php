@@ -22,7 +22,7 @@
                     <p class="text-muted">{{ $profile->experience_level ?? 'Not specified' }} Level</p>
                     
                     @if($profile->resume)
-                        <a href="{{ Storage::url($profile->resume) }}" target="_blank" class="btn btn-outline-primary btn-sm mb-2">
+                        <a href="{{ route('jobseeker.profile.resume.download') }}" class="btn btn-outline-primary btn-sm mb-2">
                             <i class="bi bi-download me-1"></i>Download Resume
                         </a>
                     @endif

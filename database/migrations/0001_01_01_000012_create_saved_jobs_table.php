@@ -20,7 +20,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfConstraints('saved_jobs');
         Schema::dropIfExists('saved_jobs');
     }
 };

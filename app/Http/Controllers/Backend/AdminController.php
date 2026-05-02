@@ -3,15 +3,23 @@
 namespace App\Http\Controllers\Backend;
 
 use App\Http\Controllers\Controller;
+use App\Mail\CompanyApproved;
+use App\Models\AdminActivityLog;
 use App\Models\Application;
 use App\Models\Company;
 use App\Models\Job;
 use App\Models\JobCategory;
 use App\Models\User;
+use App\Services\AdminLogService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
+    public function __construct(
+        private AdminLogService $adminLogService
+    ) {}
+
     public function dashboard()
     {
         $stats = [
@@ -61,8 +69,11 @@ class AdminController extends Controller
         }
 
         if ($request->has('search')) {
-            $query->where('name', 'LIKE', '%'.$request->search.'%')
-                ->orWhere('email', 'LIKE', '%'.$request->search.'%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', '%'.str_replace(['%', '_'], ['\\%', '\\_'], $search).'%')
+                    ->orWhere('email', 'LIKE', '%'.str_replace(['%', '_'], ['\\%', '\\_'], $search).'%');
+            });
         }
 
         $users = $query->latest()->paginate(20);
@@ -85,7 +96,39 @@ class AdminController extends Controller
 
         $user->update(['status' => $request->status]);
 
+        $this->adminLogService->log(
+            auth()->id(),
+            'user_status_update',
+            "Updated user {$user->name} status to {$request->status}",
+            User::class,
+            $user->id,
+            ['old_status' => $user->getOriginal('status'), 'new_status' => $request->status]
+        );
+
         return redirect()->back()->with('success', 'User status updated.');
+    }
+
+    /**
+     * Delete a user (soft delete).
+     */
+    public function deleteUser(User $user)
+    {
+        if ($user->isAdmin()) {
+            return redirect()->back()->withErrors(['error' => 'Cannot delete an admin user.']);
+        }
+
+        $this->adminLogService->log(
+            auth()->id(),
+            'user_deleted',
+            "Deleted user {$user->name} ({$user->email})",
+            User::class,
+            $user->id
+        );
+
+        $user->delete();
+
+        return redirect()->route('admin.users.index')
+            ->with('success', 'User deleted successfully.');
     }
 
     public function companies(Request $request)
@@ -97,7 +140,8 @@ class AdminController extends Controller
         }
 
         if ($request->has('search')) {
-            $query->where('name', 'LIKE', '%'.$request->search.'%');
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
+            $query->where('name', 'LIKE', '%'.$search.'%');
         }
 
         $companies = $query->latest()->paginate(15);
@@ -111,6 +155,19 @@ class AdminController extends Controller
             'status' => 'approved',
             'is_active' => true,
         ]);
+
+        $this->adminLogService->log(
+            auth()->id(),
+            'company_approved',
+            "Approved company {$company->name}",
+            Company::class,
+            $company->id
+        );
+
+        // Send email notification to the recruiter
+        if ($company->user && $company->user->email) {
+            Mail::to($company->user->email)->queue(new CompanyApproved($company));
+        }
 
         return redirect()->back()->with('success', 'Company approved successfully.');
     }
@@ -126,6 +183,14 @@ class AdminController extends Controller
             'is_active' => false,
         ]);
 
+        $this->adminLogService->log(
+            auth()->id(),
+            'company_rejected',
+            "Rejected company {$company->name}".($request->reason ? ": {$request->reason}" : ''),
+            Company::class,
+            $company->id
+        );
+
         return redirect()->back()->with('success', 'Company rejected.');
     }
 
@@ -133,12 +198,28 @@ class AdminController extends Controller
     {
         $company->update(['is_verified' => true]);
 
+        $this->adminLogService->log(
+            auth()->id(),
+            'company_verified',
+            "Verified company {$company->name}",
+            Company::class,
+            $company->id
+        );
+
         return redirect()->back()->with('success', 'Company verified.');
     }
 
     public function unverifyCompany(Company $company)
     {
         $company->update(['is_verified' => false]);
+
+        $this->adminLogService->log(
+            auth()->id(),
+            'company_unverified',
+            "Removed verification for company {$company->name}",
+            Company::class,
+            $company->id
+        );
 
         return redirect()->back()->with('success', 'Company verification removed.');
     }
@@ -156,7 +237,11 @@ class AdminController extends Controller
         }
 
         if ($request->has('search')) {
-            $query->where('title', 'LIKE', '%'.$request->search.'%');
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'LIKE', '%'.$search.'%')
+                    ->orWhereHas('company', fn ($company) => $company->where('name', 'LIKE', '%'.$search.'%'));
+            });
         }
 
         $jobs = $query->withCount('applications')->latest()->paginate(20);
@@ -178,13 +263,30 @@ class AdminController extends Controller
             'status' => 'required|in:active,pending,closed,draft',
         ]);
 
+        $oldStatus = $job->status;
         $job->update(['status' => $request->status]);
+
+        $this->adminLogService->log(
+            auth()->id(),
+            'job_status_update',
+            "Updated job '{$job->title}' status from {$oldStatus} to {$request->status}",
+            Job::class,
+            $job->id
+        );
 
         return redirect()->back()->with('success', 'Job status updated.');
     }
 
     public function destroyJob(Job $job)
     {
+        $this->adminLogService->log(
+            auth()->id(),
+            'job_deleted',
+            "Deleted job '{$job->title}' from company {$job->company->name}",
+            Job::class,
+            $job->id
+        );
+
         $job->delete();
 
         return redirect()->route('admin.jobs.index')
@@ -209,7 +311,8 @@ class AdminController extends Controller
         $query = JobCategory::query();
 
         if ($request->has('search')) {
-            $query->where('name', 'LIKE', '%'.$request->search.'%');
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
+            $query->where('name', 'LIKE', '%'.$search.'%');
         }
 
         $categories = $query->withCount('activeJobs')->latest()->paginate(15);
@@ -258,5 +361,17 @@ class AdminController extends Controller
     public function settings()
     {
         return view('backend.admin.settings');
+    }
+
+    /**
+     * View admin activity log.
+     */
+    public function activityLog(Request $request)
+    {
+        $logs = AdminActivityLog::with('admin')
+            ->latest()
+            ->paginate(20);
+
+        return view('backend.admin.activity-log', compact('logs'));
     }
 }

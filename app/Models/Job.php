@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Enums\JobStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Job extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -33,6 +35,7 @@ class Job extends Model
         'keywords',
         'vacancies',
         'application_deadline',
+        'expiry_date',
         'status',
         'is_featured',
         'is_verified',
@@ -51,6 +54,7 @@ class Job extends Model
         'applications_count' => 'integer',
         'vacancies' => 'integer',
         'application_deadline' => 'date',
+        'expiry_date' => 'date',
     ];
 
     protected static function boot()
@@ -59,7 +63,7 @@ class Job extends Model
 
         static::creating(function ($job) {
             if (empty($job->slug)) {
-                $job->slug = Str::slug($job->title).'-'.Str::random(5);
+                $job->slug = Str::slug($job->title) . '-' . Str::random(5);
             }
         });
     }
@@ -91,7 +95,7 @@ class Job extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', JobStatus::Active->value);
     }
 
     public function scopeFeatured($query)
@@ -112,7 +116,7 @@ class Job extends Model
             return "{$this->salary_currency} {$min} - {$max}";
         }
 
-        return $this->salary_currency.' '.($min ?: $max);
+        return $this->salary_currency . ' ' . ($min ?: $max);
     }
 
     public function getDaysAgoAttribute(): string
@@ -120,9 +124,17 @@ class Job extends Model
         return $this->created_at->diffForHumans();
     }
 
-    public function incrementViews(): void
+    /**
+     * Increment views with session-based deduplication.
+     */
+    public function incrementViewsOnce(): void
     {
-        $this->increment('views');
+        $sessionKey = 'job_viewed_' . $this->id;
+
+        if (! session()->has($sessionKey)) {
+            $this->increment('views');
+            session()->put($sessionKey, true);
+        }
     }
 
     public function incrementApplications(): void
@@ -133,5 +145,10 @@ class Job extends Model
     public function isDeadlinePassed(): bool
     {
         return $this->application_deadline && $this->application_deadline->isPast();
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expiry_date && $this->expiry_date->isPast();
     }
 }

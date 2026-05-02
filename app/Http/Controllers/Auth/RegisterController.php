@@ -10,14 +10,16 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class RegisterController extends Controller
 {
     public function showRegistrationForm()
     {
-        return view('auth.register');
+        $selectedRole = request('role') === 'recruiter' ? 'recruiter' : 'jobseeker';
+
+        return view('auth.register', compact('selectedRole'));
     }
 
     public function register(Request $request)
@@ -36,23 +38,32 @@ class RegisterController extends Controller
 
     protected function validator(array $data)
     {
-        return Validator::make($data, [
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'role' => ['required', 'in:recruiter,jobseeker'],
-        ]);
+        ];
+
+        if (($data['role'] ?? '') === 'recruiter') {
+            $rules['company_name'] = ['required', 'string', 'max:255'];
+        }
+
+        return Validator::make($data, $rules);
     }
 
     protected function create(array $data)
     {
         $role = Role::where('slug', $data['role'])->firstOrFail();
 
+        // The User model's hashed cast handles password hashing.
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'],
             'role_id' => $role->id,
+            'email_verified_at' => now(),
+            'status' => 'active',
         ]);
 
         if ($data['role'] === 'jobseeker') {
@@ -60,8 +71,18 @@ class RegisterController extends Controller
                 'user_id' => $user->id,
             ]);
         } elseif ($data['role'] === 'recruiter') {
+            $slug = Str::slug($data['company_name']);
+            $originalSlug = $slug;
+            $counter = 1;
+            while (Company::where('slug', $slug)->exists()) {
+                $slug = $originalSlug.'-'.$counter;
+                $counter++;
+            }
+
             Company::create([
                 'user_id' => $user->id,
+                'name' => $data['company_name'],
+                'slug' => $slug,
                 'status' => 'pending',
             ]);
         }
@@ -78,10 +99,10 @@ class RegisterController extends Controller
     {
         if ($user->isJobSeeker()) {
             return redirect()->route('jobseeker.dashboard')
-                ->with('success', 'Welcome to JobPortal! Please complete your profile.');
+                ->with('success', 'Welcome to JobConnect! Please complete your profile.');
         } elseif ($user->isRecruiter()) {
-            return redirect()->route('recruiter.dashboard')
-                ->with('success', 'Welcome to JobPortal! Please complete your company profile.');
+            return redirect()->route('recruiter.company.profile')
+                ->with('success', 'Welcome to JobConnect! Please complete your company profile.');
         }
 
         return redirect('/');
@@ -93,11 +114,11 @@ class RegisterController extends Controller
             return session('url.intended');
         }
 
-        if (auth()->user()->isAdmin()) {
+        if ($this->guard()->user()->isAdmin()) {
             return route('admin.dashboard');
-        } elseif (auth()->user()->isRecruiter()) {
+        } elseif ($this->guard()->user()->isRecruiter()) {
             return route('recruiter.dashboard');
-        } elseif (auth()->user()->isJobSeeker()) {
+        } elseif ($this->guard()->user()->isJobSeeker()) {
             return route('jobseeker.dashboard');
         }
 

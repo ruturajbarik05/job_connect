@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Company extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -40,8 +41,8 @@ class Company extends Model
         parent::boot();
 
         static::creating(function ($company) {
-            if (empty($company->slug)) {
-                $company->slug = Str::slug($company->name).'-'.Str::random(5);
+            if (empty($company->slug) && ! empty($company->name)) {
+                $company->slug = Str::slug($company->name) . '-' . Str::random(5);
             }
         });
     }
@@ -66,8 +67,11 @@ class Company extends Model
         return $this->jobs()->count();
     }
 
+    /**
+     * Fixed: properly count total applicants across all company jobs.
+     */
     public function getTotalApplicantsAttribute(): int
     {
-        return $this->jobs()->withCount('applications')->sum('applications_count');
+        return Application::whereIn('job_id', $this->jobs()->pluck('id'))->count();
     }
 }

@@ -5,37 +5,48 @@ namespace App\Http\Controllers\Backend;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CompanyUpdateRequest;
 use App\Http\Requests\JobStoreRequest;
+use App\Models\AppNotification;
 use App\Models\Application;
 use App\Models\Company;
 use App\Models\Job;
 use App\Models\JobCategory;
-use App\Models\Notification;
+use App\Services\ApplicationService;
+use App\Services\JobService;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class RecruiterController extends Controller
 {
+    public function __construct(
+        private JobService $jobService,
+        private ApplicationService $applicationService,
+        private NotificationService $notificationService
+    ) {}
+
     public function dashboard()
     {
         $user = auth()->user();
         $company = $user->company;
 
         if (! $company) {
-            return redirect()->route('recruiter.company.create')
+            return redirect()->route('recruiter.company.profile')
                 ->with('warning', 'Please complete your company profile first.');
         }
+
+        $jobIds = $user->jobs()->pluck('id');
 
         $stats = [
             'totalJobs' => $user->jobs()->count(),
             'activeJobs' => $user->jobs()->where('status', 'active')->count(),
-            'totalApplications' => Application::whereIn('job_id', $user->jobs()->pluck('id'))->count(),
-            'newApplications' => Application::whereIn('job_id', $user->jobs()->pluck('id'))
+            'totalApplications' => Application::whereIn('job_id', $jobIds)->count(),
+            'newApplications' => Application::whereIn('job_id', $jobIds)
                 ->where('status', 'applied')
                 ->count(),
         ];
 
-        $recentApplications = Application::whereIn('job_id', $user->jobs()->pluck('id'))
+        $recentApplications = Application::whereIn('job_id', $jobIds)
             ->with(['user.jobSeekerProfile', 'job'])
             ->latest()
             ->take(5)
@@ -47,7 +58,7 @@ class RecruiterController extends Controller
             ->take(5)
             ->get();
 
-        $notifications = $user->notifications()
+        $notifications = $user->appNotifications()
             ->unread()
             ->latest()
             ->take(5)
@@ -97,10 +108,10 @@ class RecruiterController extends Controller
             $data['banner'] = $request->file('banner')->store('companies/banners', 'public');
         }
 
-        if (empty($company)) {
+        if (empty($company) || ! $company->exists) {
             $data['user_id'] = $user->id;
             $data['status'] = 'pending';
-            $data['slug'] = Str::slug($request->name).'-'.Str::random(5);
+            $data['slug'] = Str::slug($request->name) . '-' . Str::random(5);
             Company::create($data);
         } else {
             $company->update($data);
@@ -124,6 +135,8 @@ class RecruiterController extends Controller
 
     public function createJob()
     {
+        $this->authorize('create', Job::class);
+
         $categories = JobCategory::where('is_active', true)->get();
 
         return view('backend.recruiter.jobs.create', compact('categories'));
@@ -140,19 +153,12 @@ class RecruiterController extends Controller
             ]);
         }
 
-        $data = $request->validated();
-        $data['user_id'] = $user->id;
-        $data['company_id'] = $company->id;
-        $data['slug'] = Str::slug($request->title).'-'.Str::random(5);
-        $data['is_verified'] = $company->is_verified;
-
-        if ($request->has('skills')) {
-            $data['skills_required'] = is_array($request->skills)
-                ? $request->skills
-                : array_map('trim', explode(',', $request->skills));
-        }
-
-        $job = Job::create($data);
+        $this->jobService->createJob(
+            $request->validated(),
+            $user->id,
+            $company->id,
+            $company->is_verified
+        );
 
         return redirect()->route('recruiter.jobs.index')
             ->with('success', 'Job posted successfully.');
@@ -171,15 +177,7 @@ class RecruiterController extends Controller
     {
         $this->authorize('update', $job);
 
-        $data = $request->validated();
-
-        if ($request->has('skills')) {
-            $data['skills_required'] = is_array($request->skills)
-                ? $request->skills
-                : array_map('trim', explode(',', $request->skills));
-        }
-
-        $job->update($data);
+        $this->jobService->updateJob($job, $request->validated());
 
         return redirect()->route('recruiter.jobs.index')
             ->with('success', 'Job updated successfully.');
@@ -195,11 +193,13 @@ class RecruiterController extends Controller
             ->with('success', 'Job deleted successfully.');
     }
 
-    public function applications(Request $request, ?Job $job = null)
+    public function applications(Request $request)
     {
         $user = auth()->user();
+        $job = null;
 
-        if ($job) {
+        if ($request->filled('job')) {
+            $job = $user->jobs()->findOrFail($request->integer('job'));
             $this->authorize('view', $job);
             $applications = $job->applications();
         } else {
@@ -223,44 +223,26 @@ class RecruiterController extends Controller
 
     public function viewApplication(Application $application)
     {
-        $user = auth()->user();
+        $this->authorize('update', $application);
 
-        if (! $user->jobs()->where('id', $application->job_id)->exists()) {
-            abort(403);
-        }
-
-        if ($application->status === 'applied') {
-            $application->update(['status' => 'viewed']);
-        }
+        $application->markAsViewed();
 
         return view('backend.recruiter.applications.show', compact('application'));
     }
 
     public function updateApplicationStatus(Request $request, Application $application)
     {
-        $user = auth()->user();
-
-        if (! $user->jobs()->where('id', $application->job_id)->exists()) {
-            abort(403);
-        }
+        $this->authorize('update', $application);
 
         $request->validate([
             'status' => 'required|in:shortlisted,interview,offer,rejected',
             'notes' => 'nullable|string',
         ]);
 
-        $application->update([
-            'status' => $request->status,
-            'notes' => $request->notes,
-            'reviewed_at' => now(),
-        ]);
-
-        Notification::send(
-            $application->user_id,
-            'application_status',
-            'Application Status Updated',
-            "Your application for {$application->job->title} has been {$request->status}.",
-            route('jobseeker.applications.show', $application->id)
+        $this->applicationService->updateStatus(
+            $application,
+            $request->status,
+            $request->notes
         );
 
         return redirect()->back()->with('success', 'Application status updated.');
@@ -268,11 +250,7 @@ class RecruiterController extends Controller
 
     public function downloadResume(Application $application)
     {
-        $user = auth()->user();
-
-        if (! $user->jobs()->where('id', $application->job_id)->exists()) {
-            abort(403);
-        }
+        $this->authorize('update', $application);
 
         $profile = $application->user->jobSeekerProfile;
 
@@ -280,7 +258,12 @@ class RecruiterController extends Controller
             return redirect()->back()->withErrors(['resume' => 'Resume not found.']);
         }
 
-        $path = storage_path('app/public/'.$profile->resume);
+        // Support both local (private) and public storage
+        if (Storage::disk('local')->exists($profile->resume)) {
+            return Storage::disk('local')->download($profile->resume);
+        }
+
+        $path = storage_path('app/public/' . $profile->resume);
 
         if (! file_exists($path)) {
             return redirect()->back()->withErrors(['resume' => 'Resume file not found.']);
@@ -291,10 +274,29 @@ class RecruiterController extends Controller
 
     public function notifications()
     {
-        $notifications = auth()->user()->notifications()
+        $notifications = auth()->user()->appNotifications()
             ->latest()
             ->paginate(20);
 
         return view('backend.recruiter.notifications.index', compact('notifications'));
+    }
+
+    public function markNotificationRead($id)
+    {
+        $notification = AppNotification::where('user_id', auth()->id())->findOrFail($id);
+        $this->notificationService->markAsRead($notification);
+
+        if ($notification->link) {
+            return redirect($notification->link);
+        }
+
+        return redirect()->back();
+    }
+
+    public function markAllNotificationsRead()
+    {
+        $this->notificationService->markAllAsRead(auth()->id());
+
+        return redirect()->back()->with('success', 'All notifications marked as read.');
     }
 }

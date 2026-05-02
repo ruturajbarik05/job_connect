@@ -39,7 +39,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfConstraints('job_seeker_profiles');
         Schema::dropIfExists('job_seeker_profiles');
     }
 };

@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('companies', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('name');
-            $table->string('slug')->unique();
+            $table->string('name')->nullable();
+            $table->string('slug')->unique()->nullable();
             $table->text('description')->nullable();
             $table->string('website')->nullable();
             $table->string('logo')->nullable();
@@ -33,7 +33,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfConstraints('companies');
         Schema::dropIfExists('companies');
     }
 };
+

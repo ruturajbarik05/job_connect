@@ -4,12 +4,12 @@
         <div class="dropdown">
             <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
                 <i class="bi bi-bell me-1"></i>
-                @if(auth()->user()->notifications->where('is_read', false)->count() > 0)
-                    <span class="badge bg-danger">{{ auth()->user()->notifications->where('is_read', false)->count() }}</span>
+                @if(auth()->user()->appNotifications->where('is_read', false)->count() > 0)
+                    <span class="badge bg-danger">{{ auth()->user()->appNotifications->where('is_read', false)->count() }}</span>
                 @endif
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
-                @forelse(auth()->user()->notifications->take(5) as $notification)
+                @forelse(auth()->user()->appNotifications->take(5) as $notification)
                     <li>
                         <a class="dropdown-item" href="{{ $notification->link ?? '#' }}">
                             <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>

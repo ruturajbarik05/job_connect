@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('job_id')->constrained()->onDelete('cascade');
-            $table->string('cover_letter')->nullable();
+            $table->text('cover_letter')->nullable();
             $table->string('resume')->nullable();
             $table->string('portfolio_url')->nullable();
             $table->enum('status', ['applied', 'viewed', 'shortlisted', 'interview', 'offer', 'rejected', 'withdrawn'])->default('applied');
@@ -27,7 +27,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfConstraints('applications');
         Schema::dropIfExists('applications');
     }
 };
+

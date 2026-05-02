@@ -14,7 +14,8 @@ class CompanyController extends Controller
             ->where('is_active', true);
 
         if ($request->has('search')) {
-            $query->where('name', 'LIKE', '%'.$request->search.'%');
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
+            $query->where('name', 'LIKE', '%' . $search . '%');
         }
 
         if ($request->has('industry')) {
