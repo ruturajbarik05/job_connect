@@ -23,8 +23,12 @@
                         @endif
                     </h3>
                     <p class="text-muted mb-2">
-                        @if($company->industry)<i class="bi bi-building me-1"></i>{{ $company->industry }}@endif
-                        @if($company->company_size)<i class="bi bi-people me-1 ms-2"></i>{{ $company->company_size }} employees@endif
+                        @if($company->industry)
+                            <span class="me-2"><i class="bi bi-building me-1"></i>{{ $company->industry }}</span>
+                        @endif
+                        @if($company->company_size)
+                            <span><i class="bi bi-people me-1"></i>{{ $company->company_size }} employees</span>
+                        @endif
                     </p>
                     @if($company->location)
                         <p class="mb-0"><i class="bi bi-geo-alt me-1"></i>{{ $company->location }}</p>

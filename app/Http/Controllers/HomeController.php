@@ -52,7 +52,7 @@ class HomeController extends Controller
     {
         $query = Job::active()->with(['company', 'category']);
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'LIKE', "%{$search}%")
@@ -61,28 +61,28 @@ class HomeController extends Controller
             });
         }
 
-        if ($request->has('category')) {
+        if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
 
-        if ($request->has('job_type')) {
+        if ($request->filled('job_type')) {
             $query->where('job_type', $request->job_type);
         }
 
-        if ($request->has('work_mode')) {
+        if ($request->filled('work_mode')) {
             $query->where('work_mode', $request->work_mode);
         }
 
-        if ($request->has('experience_level')) {
+        if ($request->filled('experience_level')) {
             $query->where('experience_level', $request->experience_level);
         }
 
-        if ($request->has('location')) {
+        if ($request->filled('location')) {
             $location = str_replace(['%', '_'], ['\\%', '\\_'], $request->location);
             $query->where('location', 'LIKE', "%{$location}%");
         }
 
-        if ($request->has('min_salary')) {
+        if ($request->filled('min_salary')) {
             $query->where('salary_max', '>=', $request->min_salary);
         }
 

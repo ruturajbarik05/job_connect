@@ -11,13 +11,14 @@
                 <div class="card-body">
                     <h5 class="mb-3">Filter Jobs</h5>
                     <form action="{{ route('jobs.search') }}" method="GET">
-                        @if(request('search'))
-                            <input type="hidden" name="search" value="{{ request('search') }}">
-                        @endif
-                        @if(request('location'))
-                            <input type="hidden" name="location" value="{{ request('location') }}">
-                        @endif
-                        
+                        <div class="mb-3">
+                            <label class="form-label">Keywords</label>
+                            <input type="text" name="search" class="form-control" placeholder="Job title, skills..." value="{{ request('search') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Location</label>
+                            <input type="text" name="location" class="form-control" placeholder="City or region" value="{{ request('location') }}">
+                        </div>
                         <div class="mb-3">
                             <label class="form-label">Job Type</label>
                             <select name="job_type" class="form-select">

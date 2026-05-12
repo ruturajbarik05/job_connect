@@ -14,15 +14,15 @@ class JobController extends Controller
     {
         $query = Job::active()->with(['company', 'category']);
 
-        if ($request->has('category')) {
+        if ($request->filled('category')) {
             $query->where('category_id', $request->category);
         }
 
-        if ($request->has('type')) {
+        if ($request->filled('type')) {
             $query->where('job_type', $request->type);
         }
 
-        if ($request->has('mode')) {
+        if ($request->filled('mode')) {
             $query->where('work_mode', $request->mode);
         }
 

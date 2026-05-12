@@ -131,6 +131,166 @@ class ProjectCompletionTest extends TestCase
             ->assertSee('A candidate applied to your job.');
     }
 
+    public function test_job_search_ignores_blank_filter_values(): void
+    {
+        $recruiter = $this->userWithRole('recruiter');
+        $company = Company::create([
+            'user_id' => $recruiter->id,
+            'name' => 'Search Co',
+            'status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        $this->jobFor($recruiter, $company, 'Full Time Search Result');
+
+        $this->get(route('jobs.search', [
+            'job_type' => 'full-time',
+            'work_mode' => '',
+        ]))
+            ->assertOk()
+            ->assertSee('Search Results (1)')
+            ->assertSee('Full Time Search Result');
+    }
+
+    public function test_job_search_page_keeps_keyword_and_location_fields_visible(): void
+    {
+        $this->get(route('jobs.search', [
+            'search' => 'seo specialist',
+            'location' => 'New York',
+            'job_type' => 'full-time',
+        ]))
+            ->assertOk()
+            ->assertSee('name="search"', false)
+            ->assertSee('value="seo specialist"', false)
+            ->assertSee('name="location"', false)
+            ->assertSee('value="New York"', false);
+    }
+
+    public function test_company_detail_page_renders_with_open_positions(): void
+    {
+        $recruiter = $this->userWithRole('recruiter');
+        $company = Company::create([
+            'user_id' => $recruiter->id,
+            'name' => 'TechCorp Solutions',
+            'slug' => 'techcorp-solutions',
+            'status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        $this->jobFor($recruiter, $company, 'Company Detail Engineer');
+
+        $this->get(route('companies.show', $company->slug))
+            ->assertOk()
+            ->assertSee('TechCorp Solutions')
+            ->assertSee('1 Open Positions')
+            ->assertSee('Company Detail Engineer');
+    }
+
+    public function test_legal_category_has_visible_bootstrap_icon(): void
+    {
+        \App\Models\JobCategory::create([
+            'name' => 'Legal',
+            'slug' => 'legal',
+            'icon' => 'bi-bank',
+            'is_active' => true,
+        ]);
+
+        $this->get(route('categories.index'))
+            ->assertOk()
+            ->assertSee('Legal')
+            ->assertSee('bi-bank');
+    }
+
+    public function test_jobseeker_profile_form_updates_profile_without_name_field(): void
+    {
+        $jobseeker = $this->userWithRole('jobseeker');
+        JobSeekerProfile::create(['user_id' => $jobseeker->id]);
+
+        $this->actingAs($jobseeker)
+            ->post(route('jobseeker.profile.update'), [
+                'first_name' => 'Ruturaj',
+                'last_name' => 'Barik',
+                'phone' => '8144727956',
+                'city' => 'Bhubaneswar',
+                'state' => 'Odisha',
+                'country' => 'India',
+                'experience_level' => 'fresher',
+                'expected_salary' => 5,
+                'summary' => 'Laravel developer profile.',
+                'skills' => 'PHP, Laravel, JavaScript',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Profile updated successfully.');
+
+        $this->assertDatabaseHas('users', [
+            'id' => $jobseeker->id,
+            'name' => 'Ruturaj Barik',
+        ]);
+
+        $this->assertDatabaseHas('job_seeker_profiles', [
+            'user_id' => $jobseeker->id,
+            'first_name' => 'Ruturaj',
+            'last_name' => 'Barik',
+            'phone' => '8144727956',
+            'city' => 'Bhubaneswar',
+        ]);
+
+        $this->actingAs($jobseeker)
+            ->get(route('jobseeker.profile.index'))
+            ->assertOk()
+            ->assertSee('Ruturaj Barik')
+            ->assertSee('8144727956')
+            ->assertSee('Bhubaneswar')
+            ->assertSee('PHP');
+    }
+
+    public function test_jobseeker_can_add_education_and_work_experience(): void
+    {
+        $jobseeker = $this->userWithRole('jobseeker');
+        JobSeekerProfile::create(['user_id' => $jobseeker->id]);
+
+        $this->actingAs($jobseeker)
+            ->post(route('jobseeker.education.store'), [
+                'institution' => 'Utkal University',
+                'degree' => 'B.Tech',
+                'field_of_study' => 'Computer Science',
+                'start_date' => '2020-01-01',
+                'end_date' => '2024-01-01',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Education added successfully.');
+
+        $this->actingAs($jobseeker)
+            ->post(route('jobseeker.experience.store'), [
+                'job_title' => 'Laravel Developer',
+                'company_name' => 'JobConnect',
+                'location' => 'Bhubaneswar',
+                'start_date' => '2024-02-01',
+                'end_date' => '2026-01-01',
+                'description' => 'Built Laravel features.',
+            ])
+            ->assertRedirect()
+            ->assertSessionHas('success', 'Experience added successfully.');
+
+        $this->assertDatabaseHas('education', [
+            'user_id' => $jobseeker->id,
+            'institution' => 'Utkal University',
+            'degree' => 'B.Tech',
+        ]);
+
+        $this->assertDatabaseHas('experiences', [
+            'user_id' => $jobseeker->id,
+            'job_title' => 'Laravel Developer',
+            'company_name' => 'JobConnect',
+        ]);
+
+        $this->actingAs($jobseeker)
+            ->get(route('jobseeker.profile.index'))
+            ->assertOk()
+            ->assertSee('Utkal University')
+            ->assertSee('Laravel Developer');
+    }
+
     private function userWithRole(string $slug): User
     {
         $role = Role::firstOrCreate(

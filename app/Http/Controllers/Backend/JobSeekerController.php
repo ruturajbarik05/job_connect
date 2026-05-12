@@ -77,6 +77,7 @@ class JobSeekerController extends Controller
         $user = auth()->user();
 
         $data = $request->validated();
+        $displayName = $data['name'] ?? trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
 
         if ($request->hasFile('avatar')) {
             $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
@@ -86,18 +87,18 @@ class JobSeekerController extends Controller
         }
 
         $user->update([
-            'name' => $data['name'] ?? $user->name,
+            'name' => $displayName !== '' ? $displayName : $user->name,
             'avatar' => $data['avatar'] ?? $user->avatar,
         ]);
 
         $profileData = collect($data)->except(['name', 'avatar'])->toArray();
 
         if (isset($profileData['skills']) && is_string($profileData['skills'])) {
-            $profileData['skills'] = array_map('trim', explode(',', $profileData['skills']));
+            $profileData['skills'] = array_values(array_filter(array_map('trim', explode(',', $profileData['skills']))));
         }
 
         if (isset($profileData['languages']) && is_string($profileData['languages'])) {
-            $profileData['languages'] = array_map('trim', explode(',', $profileData['languages']));
+            $profileData['languages'] = array_values(array_filter(array_map('trim', explode(',', $profileData['languages']))));
         }
 
         $user->jobSeekerProfile()->updateOrCreate(
@@ -115,7 +116,7 @@ class JobSeekerController extends Controller
         ]);
 
         $user = auth()->user();
-        $profile = $user->jobSeekerProfile;
+        $profile = $user->jobSeekerProfile()->firstOrCreate(['user_id' => $user->id]);
 
         if ($request->hasFile('resume')) {
             if ($profile->resume) {

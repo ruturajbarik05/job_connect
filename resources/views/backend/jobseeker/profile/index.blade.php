@@ -6,6 +6,17 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <strong>Please fix the following:</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     
     <div class="row">
         <div class="col-lg-4">
@@ -69,50 +80,50 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">First Name</label>
-                                <input type="text" name="first_name" class="form-control" value="{{ $profile->first_name ?? '' }}">
+                                <input type="text" name="first_name" class="form-control" value="{{ old('first_name', $profile->first_name ?? '') }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Last Name</label>
-                                <input type="text" name="last_name" class="form-control" value="{{ $profile->last_name ?? '' }}">
+                                <input type="text" name="last_name" class="form-control" value="{{ old('last_name', $profile->last_name ?? '') }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Phone</label>
-                                <input type="text" name="phone" class="form-control" value="{{ $profile->phone ?? '' }}">
+                                <input type="text" name="phone" class="form-control" value="{{ old('phone', $profile->phone ?? '') }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">City</label>
-                                <input type="text" name="city" class="form-control" value="{{ $profile->city ?? '' }}">
+                                <input type="text" name="city" class="form-control" value="{{ old('city', $profile->city ?? '') }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">State</label>
-                                <input type="text" name="state" class="form-control" value="{{ $profile->state ?? '' }}">
+                                <input type="text" name="state" class="form-control" value="{{ old('state', $profile->state ?? '') }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Country</label>
-                                <input type="text" name="country" class="form-control" value="{{ $profile->country ?? '' }}">
+                                <input type="text" name="country" class="form-control" value="{{ old('country', $profile->country ?? '') }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Experience Level</label>
                                 <select name="experience_level" class="form-select">
                                     <option value="">Select</option>
-                                    <option value="fresher" {{ ($profile->experience_level ?? '') == 'fresher' ? 'selected' : '' }}>Fresher</option>
-                                    <option value="mid" {{ ($profile->experience_level ?? '') == 'mid' ? 'selected' : '' }}>Mid Level</option>
-                                    <option value="senior" {{ ($profile->experience_level ?? '') == 'senior' ? 'selected' : '' }}>Senior</option>
-                                    <option value="lead" {{ ($profile->experience_level ?? '') == 'lead' ? 'selected' : '' }}>Lead</option>
-                                    <option value="executive" {{ ($profile->experience_level ?? '') == 'executive' ? 'selected' : '' }}>Executive</option>
+                                    <option value="fresher" {{ old('experience_level', $profile->experience_level ?? '') == 'fresher' ? 'selected' : '' }}>Fresher</option>
+                                    <option value="mid" {{ old('experience_level', $profile->experience_level ?? '') == 'mid' ? 'selected' : '' }}>Mid Level</option>
+                                    <option value="senior" {{ old('experience_level', $profile->experience_level ?? '') == 'senior' ? 'selected' : '' }}>Senior</option>
+                                    <option value="lead" {{ old('experience_level', $profile->experience_level ?? '') == 'lead' ? 'selected' : '' }}>Lead</option>
+                                    <option value="executive" {{ old('experience_level', $profile->experience_level ?? '') == 'executive' ? 'selected' : '' }}>Executive</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Expected Salary</label>
-                                <input type="number" name="expected_salary" class="form-control" value="{{ $profile->expected_salary ?? '' }}">
+                                <input type="number" name="expected_salary" class="form-control" value="{{ old('expected_salary', $profile->expected_salary ?? '') }}">
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Professional Summary</label>
-                                <textarea name="summary" class="form-control" rows="4">{{ $profile->summary ?? '' }}</textarea>
+                                <textarea name="summary" class="form-control" rows="4">{{ old('summary', $profile->summary ?? '') }}</textarea>
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Skills (comma separated)</label>
-                                <input type="text" name="skills" class="form-control" value="{{ is_array($profile->skills ?? null) ? implode(', ', $profile->skills) : '' }}" placeholder="PHP, Laravel, JavaScript...">
+                                <input type="text" name="skills" class="form-control" value="{{ old('skills', is_array($profile->skills ?? null) ? implode(', ', $profile->skills) : '') }}" placeholder="PHP, Laravel, JavaScript...">
                             </div>
                             <div class="col-12">
                                 <label class="form-label">Avatar</label>
@@ -155,19 +166,19 @@
                         @csrf
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <input type="text" name="institution" class="form-control" placeholder="Institution" required>
+                                <input type="text" name="institution" class="form-control" placeholder="Institution" value="{{ old('institution') }}" required>
                             </div>
                             <div class="col-md-6">
-                                <input type="text" name="degree" class="form-control" placeholder="Degree" required>
+                                <input type="text" name="degree" class="form-control" placeholder="Degree" value="{{ old('degree') }}" required>
                             </div>
                             <div class="col-md-6">
-                                <input type="text" name="field_of_study" class="form-control" placeholder="Field of Study" required>
+                                <input type="text" name="field_of_study" class="form-control" placeholder="Field of Study" value="{{ old('field_of_study') }}" required>
                             </div>
                             <div class="col-md-3">
-                                <input type="date" name="start_date" class="form-control" placeholder="Start Date">
+                                <input type="date" name="start_date" class="form-control" value="{{ old('start_date') }}">
                             </div>
                             <div class="col-md-3">
-                                <input type="date" name="end_date" class="form-control" placeholder="End Date">
+                                <input type="date" name="end_date" class="form-control" value="{{ old('end_date') }}">
                             </div>
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary btn-sm">Add Education</button>
@@ -206,22 +217,22 @@
                         @csrf
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <input type="text" name="job_title" class="form-control" placeholder="Job Title" required>
+                                <input type="text" name="job_title" class="form-control" placeholder="Job Title" value="{{ old('job_title') }}" required>
                             </div>
                             <div class="col-md-6">
-                                <input type="text" name="company_name" class="form-control" placeholder="Company Name" required>
+                                <input type="text" name="company_name" class="form-control" placeholder="Company Name" value="{{ old('company_name') }}" required>
                             </div>
                             <div class="col-md-6">
-                                <input type="text" name="location" class="form-control" placeholder="Location">
+                                <input type="text" name="location" class="form-control" placeholder="Location" value="{{ old('location') }}">
                             </div>
                             <div class="col-md-3">
-                                <input type="date" name="start_date" class="form-control">
+                                <input type="date" name="start_date" class="form-control" value="{{ old('start_date') }}">
                             </div>
                             <div class="col-md-3">
-                                <input type="date" name="end_date" class="form-control">
+                                <input type="date" name="end_date" class="form-control" value="{{ old('end_date') }}">
                             </div>
                             <div class="col-12">
-                                <textarea name="description" class="form-control" rows="2" placeholder="Description"></textarea>
+                                <textarea name="description" class="form-control" rows="2" placeholder="Description">{{ old('description') }}</textarea>
                             </div>
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary btn-sm">Add Experience</button>

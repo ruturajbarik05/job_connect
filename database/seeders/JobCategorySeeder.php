@@ -19,7 +19,7 @@ class JobCategorySeeder extends Seeder
             ['name' => 'Human Resources', 'slug' => 'hr', 'icon' => 'bi-people', 'description' => 'Recruitment, training, and employee relations'],
             ['name' => 'Design & Creative', 'slug' => 'design-creative', 'icon' => 'bi-palette', 'description' => 'Graphic design, UI/UX, and creative arts'],
             ['name' => 'Administration', 'slug' => 'administration', 'icon' => 'bi-briefcase', 'description' => 'Office management and administrative support'],
-            ['name' => 'Legal', 'slug' => 'legal', 'icon' => 'bi-scales', 'description' => 'Lawyers, paralegals, and legal services'],
+            ['name' => 'Legal', 'slug' => 'legal', 'icon' => 'bi-bank', 'description' => 'Lawyers, paralegals, and legal services'],
             ['name' => 'Manufacturing', 'slug' => 'manufacturing', 'icon' => 'bi-gear', 'description' => 'Production, quality control, and operations'],
             ['name' => 'Hospitality', 'slug' => 'hospitality', 'icon' => 'bi-building', 'description' => 'Hotels, restaurants, and tourism'],
         ];

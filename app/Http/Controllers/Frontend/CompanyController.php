@@ -13,12 +13,12 @@ class CompanyController extends Controller
         $query = Company::where('status', 'approved')
             ->where('is_active', true);
 
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
             $query->where('name', 'LIKE', '%' . $search . '%');
         }
 
-        if ($request->has('industry')) {
+        if ($request->filled('industry')) {
             $query->where('industry', $request->industry);
         }
 
@@ -44,8 +44,7 @@ class CompanyController extends Controller
         $jobs = $company->activeJobs()
             ->with('category')
             ->latest()
-            ->take(10)
-            ->get();
+            ->paginate(10);
 
         return view('frontend.companies.show', compact('company', 'jobs'));
     }
