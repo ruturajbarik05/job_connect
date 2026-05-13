@@ -64,12 +64,40 @@ body {
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 }
 
-.category-card {
-    transition: transform 0.2s;
+.category-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
 }
 
-.category-card:hover {
-    transform: translateY(-3px);
+.category-grid-item {
+    flex: 0 1 245px;
+    max-width: 245px;
+    width: 100%;
+}
+
+.category-card {
+    min-height: 205px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    transform-origin: center;
+}
+
+.category-card:hover,
+.category-card:focus-within {
+    transform: translateY(-10px) scale(1.06);
+    box-shadow: 0 18px 35px rgba(13, 110, 253, 0.22);
+    border-color: rgba(13, 110, 253, 0.25);
+    z-index: 2;
+}
+
+.category-card:hover i,
+.category-card:focus-within i {
+    transform: scale(1.08);
+}
+
+.category-card i {
+    transition: transform 0.25s ease;
 }
 
 .hero {

@@ -30,7 +30,7 @@ return new class extends Migration
             $table->json('languages')->nullable();
             $table->enum('experience_level', ['fresher', 'mid', 'senior', 'lead', 'executive'])->default('fresher');
             $table->decimal('expected_salary', 12, 2)->nullable();
-            $table->string('salary_currency', 3)->default('USD');
+            $table->string('salary_currency', 3)->default('INR');
             $table->enum('employment_type_preference', ['full-time', 'part-time', 'contract', 'internship', 'freelance'])->default('full-time');
             $table->boolean('is_active')->default(true);
             $table->timestamps();

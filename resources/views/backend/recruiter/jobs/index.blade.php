@@ -5,9 +5,7 @@
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4>My Jobs</h4>
-        @if(auth()->user()->company && auth()->user()->company->status === 'approved')
-            <a href="{{ route('recruiter.jobs.create') }}" class="btn btn-primary">Post New Job</a>
-        @endif
+        <a href="{{ route('recruiter.jobs.create') }}" class="btn btn-primary">Post New Job</a>
     </div>
     
     <div class="card">

@@ -166,6 +166,78 @@ class ProjectCompletionTest extends TestCase
             ->assertSee('value="New York"', false);
     }
 
+    public function test_homepage_shows_trending_jobs_and_domains_by_applications(): void
+    {
+        $recruiter = $this->userWithRole('recruiter');
+        $jobseeker = $this->userWithRole('jobseeker');
+        $anotherJobseeker = $this->userWithRole('jobseeker');
+        $company = Company::create([
+            'user_id' => $recruiter->id,
+            'name' => 'Trend Co',
+            'status' => 'approved',
+            'is_active' => true,
+        ]);
+        $engineering = JobCategory::create(['name' => 'Engineering']);
+        $marketing = JobCategory::create(['name' => 'Marketing']);
+
+        $popularJob = $this->jobFor($recruiter, $company, 'Popular Backend Engineer');
+        $popularJob->update(['category_id' => $engineering->id]);
+        $otherJob = $this->jobFor($recruiter, $company, 'Content Writer');
+        $otherJob->update(['category_id' => $marketing->id]);
+
+        Application::create(['user_id' => $jobseeker->id, 'job_id' => $popularJob->id, 'status' => 'applied', 'applied_at' => now()]);
+        Application::create(['user_id' => $anotherJobseeker->id, 'job_id' => $popularJob->id, 'status' => 'applied', 'applied_at' => now()]);
+        Application::create(['user_id' => $jobseeker->id, 'job_id' => $otherJob->id, 'status' => 'applied', 'applied_at' => now()]);
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSee('Trending')
+            ->assertSee('Popular Backend Engineer')
+            ->assertSee('Engineering')
+            ->assertSee('2')
+            ->assertSee('applications');
+    }
+
+    public function test_homepage_browse_categories_shows_top_five_by_active_jobs(): void
+    {
+        $recruiter = $this->userWithRole('recruiter');
+        $company = Company::create([
+            'user_id' => $recruiter->id,
+            'name' => 'Category Ranking Co',
+            'status' => 'approved',
+            'is_active' => true,
+        ]);
+
+        $categories = collect([
+            'Alpha Domain',
+            'Beta Domain',
+            'Gamma Domain',
+            'Delta Domain',
+            'Epsilon Domain',
+            'Zeta Domain',
+        ])->map(fn ($name) => JobCategory::create(['name' => $name]));
+
+        $jobCounts = [5, 4, 3, 2, 1, 0];
+
+        foreach ($categories as $index => $category) {
+            for ($i = 1; $i <= $jobCounts[$index]; $i++) {
+                $job = $this->jobFor($recruiter, $company, "{$category->name} Job {$i}");
+                $job->update(['category_id' => $category->id]);
+            }
+        }
+
+        $this->get(route('home'))
+            ->assertOk()
+            ->assertSeeInOrder([
+                'Alpha Domain',
+                'Beta Domain',
+                'Gamma Domain',
+                'Delta Domain',
+                'Epsilon Domain',
+            ])
+            ->assertDontSee('Zeta Domain');
+    }
+
     public function test_company_detail_page_renders_with_open_positions(): void
     {
         $recruiter = $this->userWithRole('recruiter');

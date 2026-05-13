@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Application;
 use App\Models\Company;
 use App\Models\Job;
 use App\Models\JobCategory;
@@ -25,10 +26,38 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
+        $trendingJobs = Job::with(['company', 'category'])
+            ->withCount('applications')
+            ->orderByDesc('applications_count')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $trendingDomains = JobCategory::query()
+            ->select('job_categories.*')
+            ->withCount('jobs')
+            ->selectSub(
+                Application::query()
+                    ->selectRaw('COUNT(*)')
+                    ->join('jobs', 'applications.job_id', '=', 'jobs.id')
+                    ->whereColumn('jobs.category_id', 'job_categories.id')
+                    ->whereNull('applications.deleted_at')
+                    ->whereNull('jobs.deleted_at'),
+                'applications_count'
+            )
+            ->orderByDesc('applications_count')
+            ->orderBy('name')
+            ->take(5)
+            ->get();
+
         $categories = Cache::remember('homepage_categories', 600, function () {
             return JobCategory::withCount(['activeJobs' => function ($query) {
                 $query->where('status', 'active');
-            }])->get();
+            }])
+                ->orderByDesc('active_jobs_count')
+                ->orderBy('name')
+                ->take(5)
+                ->get();
         });
 
         $totalJobs = Cache::remember('homepage_total_jobs', 300, function () {
@@ -41,6 +70,8 @@ class HomeController extends Controller
 
         return view('frontend.home.index', compact(
             'featuredJobs',
+            'trendingJobs',
+            'trendingDomains',
             'recentJobs',
             'categories',
             'totalJobs',

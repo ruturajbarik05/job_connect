@@ -52,7 +52,7 @@ class AuthWorkflowTest extends TestCase
         ])->assertRedirect(route('jobseeker.dashboard'));
     }
 
-    public function test_recruiter_can_register_with_company_and_login_to_company_profile_until_approved(): void
+    public function test_recruiter_can_register_with_company_and_use_account_pages_until_approved(): void
     {
         $this->get(route('register', ['role' => 'recruiter']))
             ->assertOk()
@@ -86,7 +86,50 @@ class AuthWorkflowTest extends TestCase
 
         $this->actingAs($user)
             ->get(route('recruiter.dashboard'))
-            ->assertRedirect(route('recruiter.company.profile'));
+            ->assertOk()
+            ->assertSee('Dashboard');
+
+        $this->actingAs($user)
+            ->get(route('recruiter.jobs.index'))
+            ->assertOk()
+            ->assertSee('My Jobs')
+            ->assertSee('Post New Job');
+
+        $this->actingAs($user)
+            ->get(route('recruiter.applications.index'))
+            ->assertOk()
+            ->assertSee('Applications');
+
+        $this->actingAs($user)
+            ->get(route('recruiter.notifications.index'))
+            ->assertOk()
+            ->assertSee('Notifications');
+
+        $this->actingAs($user)
+            ->get(route('recruiter.jobs.create'))
+            ->assertOk()
+            ->assertSee('Post New Job');
+
+        $this->actingAs($user)
+            ->post(route('recruiter.jobs.store'), [
+                'title' => 'UI Designer',
+                'description' => 'Design product screens and user flows.',
+                'job_type' => 'full-time',
+                'work_mode' => 'remote',
+                'status' => 'active',
+            ])
+            ->assertRedirect(route('recruiter.jobs.index'));
+
+        $this->assertDatabaseHas('jobs', [
+            'user_id' => $user->id,
+            'title' => 'UI Designer',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('recruiter.jobs.index'))
+            ->assertOk()
+            ->assertSee('UI Designer');
     }
 
     public function test_approved_recruiter_can_reach_dashboard_after_login(): void

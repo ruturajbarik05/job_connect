@@ -121,7 +121,7 @@ class DatabaseSeeder extends Seeder
                 'skills' => ['PHP', 'Laravel', 'JavaScript', 'React', 'Vue.js', 'MySQL', 'Git'],
                 'experience_level' => 'senior',
                 'expected_salary' => 120000,
-                'salary_currency' => 'USD',
+                'salary_currency' => 'INR',
                 'employment_type_preference' => 'full-time',
             ]
         );
@@ -150,7 +150,7 @@ class DatabaseSeeder extends Seeder
                 'skills' => ['SEO', 'Google Analytics', 'Content Marketing', 'Social Media'],
                 'experience_level' => 'mid',
                 'expected_salary' => 85000,
-                'salary_currency' => 'USD',
+                'salary_currency' => 'INR',
                 'employment_type_preference' => 'full-time',
             ]
         );
@@ -174,7 +174,7 @@ class DatabaseSeeder extends Seeder
                     'experience_level' => 'senior',
                     'salary_min' => 100000,
                     'salary_max' => 140000,
-                    'salary_currency' => 'USD',
+                    'salary_currency' => 'INR',
                     'skills_required' => ['PHP', 'Laravel', 'React', 'MySQL', 'Docker', 'AWS'],
                     'vacancies' => 2,
                     'status' => 'active',
@@ -196,7 +196,7 @@ class DatabaseSeeder extends Seeder
                     'experience_level' => 'fresher',
                     'salary_min' => 50000,
                     'salary_max' => 70000,
-                    'salary_currency' => 'USD',
+                    'salary_currency' => 'INR',
                     'skills_required' => ['PHP', 'JavaScript', 'HTML', 'CSS'],
                     'vacancies' => 3,
                     'status' => 'active',
@@ -219,7 +219,7 @@ class DatabaseSeeder extends Seeder
                     'experience_level' => 'mid',
                     'salary_min' => 65000,
                     'salary_max' => 90000,
-                    'salary_currency' => 'USD',
+                    'salary_currency' => 'INR',
                     'skills_required' => ['SEO', 'Google Analytics', 'Ahrefs'],
                     'vacancies' => 1,
                     'status' => 'active',
@@ -241,7 +241,7 @@ class DatabaseSeeder extends Seeder
                     'experience_level' => 'senior',
                     'salary_min' => 85000,
                     'salary_max' => 110000,
-                    'salary_currency' => 'USD',
+                    'salary_currency' => 'INR',
                     'skills_required' => ['Content Strategy', 'Copywriting', 'SEO', 'Social Media'],
                     'vacancies' => 1,
                     'status' => 'active',

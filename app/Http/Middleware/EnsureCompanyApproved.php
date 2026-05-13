@@ -13,13 +13,9 @@ class EnsureCompanyApproved
         $user = $request->user();
 
         if ($user && $user->isRecruiter()) {
-            $company = $user->company;
-
-            if (! $company || $company->status !== 'approved') {
-                if (! $request->routeIs('recruiter.company.*')) {
-                    return redirect()->route('recruiter.company.profile')
-                        ->with('warning', 'Your company profile must be approved before you can post jobs.');
-                }
+            if (! $user->company && ! $request->routeIs('recruiter.company.*')) {
+                return redirect()->route('recruiter.company.profile')
+                    ->with('warning', 'Please complete your company profile first.');
             }
         }
 

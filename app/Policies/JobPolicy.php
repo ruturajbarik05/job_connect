@@ -22,7 +22,7 @@ class JobPolicy
 
     public function create(User $user): bool
     {
-        return $user->isRecruiter() && $user->company && $user->company->status === 'approved';
+        return $user->isRecruiter() && (bool) $user->company;
     }
 
     public function update(User $user, Job $job): bool

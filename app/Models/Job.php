@@ -112,11 +112,13 @@ class Job extends Model
         $min = $this->salary_min ? number_format($this->salary_min, 0) : '';
         $max = $this->salary_max ? number_format($this->salary_max, 0) : '';
 
+        $currency = $this->salary_currency ?: 'INR';
+
         if ($min && $max) {
-            return "{$this->salary_currency} {$min} - {$max}";
+            return "{$currency} {$min} - {$max}";
         }
 
-        return $this->salary_currency . ' ' . ($min ?: $max);
+        return $currency . ' ' . ($min ?: $max);
     }
 
     public function getDaysAgoAttribute(): string

@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('experience_level')->nullable();
             $table->decimal('salary_min', 12, 2)->nullable();
             $table->decimal('salary_max', 12, 2)->nullable();
-            $table->string('salary_currency', 3)->default('USD');
+            $table->string('salary_currency', 3)->default('INR');
             $table->string('salary_type')->nullable();
             $table->json('skills_required')->nullable();
             $table->json('keywords')->nullable();

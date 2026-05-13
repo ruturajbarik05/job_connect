@@ -17,6 +17,7 @@ class JobService
         $data['company_id'] = $companyId;
         $data['slug'] = Str::slug($data['title']) . '-' . Str::random(5);
         $data['is_verified'] = $isVerified;
+        $data['salary_currency'] = 'INR';
 
         if (isset($data['skills'])) {
             $data['skills_required'] = is_array($data['skills'])
@@ -33,6 +34,8 @@ class JobService
      */
     public function updateJob(Job $job, array $data): Job
     {
+        $data['salary_currency'] = 'INR';
+
         if (isset($data['skills'])) {
             $data['skills_required'] = is_array($data['skills'])
                 ? $data['skills']

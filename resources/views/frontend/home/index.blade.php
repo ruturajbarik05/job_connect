@@ -26,6 +26,90 @@
 
 <section class="py-5">
     <div class="container">
+        <div class="text-center mb-5">
+            <h3>Trending</h3>
+            <p class="text-muted">See where candidates are applying most right now</p>
+        </div>
+        <div class="row g-4 mb-5">
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h5 class="mb-0">Jobs</h5>
+                            <span class="badge bg-primary-subtle text-primary">Most Applied</span>
+                        </div>
+                        @forelse($trendingJobs as $job)
+                            <a href="{{ route('jobs.show', $job->slug) }}" class="text-decoration-none text-dark">
+                                <div class="d-flex align-items-center border-bottom py-3">
+                                    <div class="flex-shrink-0 me-3">
+                                        @if($job->company && $job->company->logo)
+                                            <img src="{{ Storage::url($job->company->logo) }}" alt="{{ $job->company->name }}" class="rounded" width="48" height="48" style="object-fit: cover;">
+                                        @else
+                                            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                                <i class="bi bi-briefcase text-primary"></i>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ $job->title }}</h6>
+                                        <div class="small text-muted">
+                                            {{ $job->company->name ?? 'Company' }}
+                                            @if($job->category)
+                                                <span class="mx-1">•</span>{{ $job->category->name }}
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="text-end ms-3">
+                                        <div class="fw-bold text-primary">{{ $job->applications_count }}</div>
+                                        <small class="text-muted">applications</small>
+                                    </div>
+                                </div>
+                            </a>
+                        @empty
+                            <div class="text-center py-4">
+                                <i class="bi bi-briefcase display-5 text-secondary"></i>
+                                <p class="text-muted mt-3 mb-0">No job applications yet.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h5 class="mb-0">Domains</h5>
+                            <span class="badge bg-success-subtle text-success">Top Domains</span>
+                        </div>
+                        @forelse($trendingDomains as $domain)
+                            <a href="{{ route('categories.show', $domain->slug) }}" class="text-decoration-none text-dark">
+                                <div class="d-flex align-items-center border-bottom py-3">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                            <i class="{{ $domain->icon ?? 'bi bi-grid' }} text-primary fs-4"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">{{ $domain->name }}</h6>
+                                        <small class="text-muted">{{ $domain->jobs_count }} jobs listed</small>
+                                    </div>
+                                    <div class="text-end ms-3">
+                                        <div class="fw-bold text-success">{{ $domain->applications_count }}</div>
+                                        <small class="text-muted">applications</small>
+                                    </div>
+                                </div>
+                            </a>
+                        @empty
+                            <div class="text-center py-4">
+                                <i class="bi bi-grid display-5 text-secondary"></i>
+                                <p class="text-muted mt-3 mb-0">No domain application trends yet.</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row mb-4">
             <div class="col-md-6">
                 <h3>Featured Jobs</h3>
@@ -95,9 +179,9 @@
             <h3>Browse by Category</h3>
             <p class="text-muted">Explore opportunities across different industries</p>
         </div>
-        <div class="row g-4">
-            @foreach($categories->take(6) as $category)
-                <div class="col-lg-2 col-md-4 col-6">
+        <div class="category-grid">
+            @foreach($categories as $category)
+                <div class="category-grid-item">
                     <a href="{{ route('categories.show', $category->slug) }}" class="text-decoration-none">
                         <div class="card h-100 text-center border-0 shadow-sm category-card">
                             <div class="card-body">

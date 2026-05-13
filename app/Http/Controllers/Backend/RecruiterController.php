@@ -147,9 +147,9 @@ class RecruiterController extends Controller
         $user = auth()->user();
         $company = $user->company;
 
-        if (! $company || $company->status !== 'approved') {
+        if (! $company) {
             return redirect()->back()->withErrors([
-                'company' => 'Your company must be approved before posting jobs.',
+                'company' => 'Please complete your company profile before posting jobs.',
             ]);
         }
 
