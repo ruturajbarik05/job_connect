@@ -58,8 +58,8 @@
                     @forelse($recentApplications as $application)
                         <div class="d-flex align-items-center p-3 border-bottom">
                             <div class="flex-shrink-0 me-3">
-                                @if($application->user->avatar)
-                                    <img src="{{ Storage::url($application->user->avatar) }}" alt="" width="50" class="rounded-circle">
+                                @if($application->user->avatar_url)
+                                    <img src="{{ $application->user->avatar_url }}" alt="" width="50" class="rounded-circle">
                                 @else
                                     <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white" style="width: 50px; height: 50px;">
                                         {{ substr($application->user->name, 0, 1) }}

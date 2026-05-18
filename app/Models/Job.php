@@ -90,7 +90,7 @@ class Job extends Model
 
     public function savedByUsers()
     {
-        return $this->belongsToMany(User::class, 'saved_jobs');
+        return $this->belongsToMany(User::class, 'saved_jobs')->withTimestamps();
     }
 
     public function scopeActive($query)

@@ -68,7 +68,7 @@ class User extends Authenticatable
 
     public function savedJobs()
     {
-        return $this->belongsToMany(Job::class, 'saved_jobs');
+        return $this->belongsToMany(Job::class, 'saved_jobs')->withTimestamps();
     }
 
     /**
@@ -111,5 +111,18 @@ class User extends Authenticatable
         }
 
         return $this->company && $this->company->is_verified;
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (! $this->avatar) {
+            return null;
+        }
+
+        if (filter_var($this->avatar, FILTER_VALIDATE_URL)) {
+            return $this->avatar;
+        }
+
+        return asset('storage/'.ltrim($this->avatar, '/'));
     }
 }

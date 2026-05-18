@@ -22,8 +22,8 @@
         <div class="col-lg-4">
             <div class="card mb-4">
                 <div class="card-body text-center">
-                    @if($user->avatar)
-                        <img src="{{ Storage::url($user->avatar) }}" alt="Avatar" class="rounded-circle mb-3" width="120" height="120" style="object-fit: cover;">
+                    @if($user->avatar_url)
+                        <img src="{{ $user->avatar_url }}" alt="Avatar" class="rounded-circle mb-3" width="120" height="120" style="object-fit: cover;">
                     @else
                         <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 120px; height: 120px;">
                             <i class="bi bi-person text-white" style="font-size: 48px;"></i>

@@ -35,7 +35,9 @@
                     </div>
                     <div class="card-footer bg-white">
                         <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted">Saved {{ $job->pivot->created_at->diffForHumans() }}</small>
+                            <small class="text-muted">
+                                Saved {{ $job->pivot->created_at?->diffForHumans() ?? 'recently' }}
+                            </small>
                             <form action="{{ route('jobs.save', $job) }}" method="POST" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>

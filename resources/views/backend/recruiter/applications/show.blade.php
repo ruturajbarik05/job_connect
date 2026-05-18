@@ -21,8 +21,8 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-3 text-center">
-                            @if($application->user->avatar)
-                                <img src="{{ Storage::url($application->user->avatar) }}" alt="" class="rounded mb-3" width="120" height="120" style="object-fit: cover;">
+                            @if($application->user->avatar_url)
+                                <img src="{{ $application->user->avatar_url }}" alt="" class="rounded mb-3" width="120" height="120" style="object-fit: cover;">
                             @else
                                 <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center text-white mb-3" style="width: 120px; height: 120px; font-size: 48px;">
                                     {{ substr($application->user->name, 0, 1) }}

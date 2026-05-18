@@ -49,8 +49,8 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        @if($application->user->avatar)
-                                            <img src="{{ Storage::url($application->user->avatar) }}" alt="" class="rounded-circle me-2" width="40" height="40">
+                                        @if($application->user->avatar_url)
+                                            <img src="{{ $application->user->avatar_url }}" alt="" class="rounded-circle me-2" width="40" height="40">
                                         @else
                                             <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white me-2" style="width: 40px; height: 40px;">
                                                 {{ substr($application->user->name, 0, 1) }}

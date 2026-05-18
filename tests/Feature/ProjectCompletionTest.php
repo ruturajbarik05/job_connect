@@ -316,6 +316,27 @@ class ProjectCompletionTest extends TestCase
             ->assertSee('PHP');
     }
 
+    public function test_jobseeker_saved_jobs_page_renders_saved_timestamp(): void
+    {
+        $jobseeker = $this->userWithRole('jobseeker');
+        $recruiter = $this->userWithRole('recruiter');
+        $company = Company::create([
+            'user_id' => $recruiter->id,
+            'name' => 'Saved Jobs Co',
+            'status' => 'approved',
+            'is_active' => true,
+        ]);
+        $job = $this->jobFor($recruiter, $company, 'Saved Laravel Role');
+
+        $jobseeker->savedJobs()->attach($job->id);
+
+        $this->actingAs($jobseeker)
+            ->get(route('jobseeker.saved-jobs.index'))
+            ->assertOk()
+            ->assertSee('Saved Laravel Role')
+            ->assertSee('Saved');
+    }
+
     public function test_jobseeker_can_add_education_and_work_experience(): void
     {
         $jobseeker = $this->userWithRole('jobseeker');
